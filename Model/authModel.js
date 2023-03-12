@@ -24,6 +24,9 @@ let authModel = {
                             }
                         },
                         {
+                            $addFields: {'isVisitor': {$ne: [data.userId, '$userId']}}
+                        },
+                        {
                             $unwind: {
                                 path: '$userActions',
                                 preserveNullAndEmptyArrays: true
@@ -85,7 +88,8 @@ let authModel = {
                                 _id: '$_id',
                                 views: {$first: '$views'},
                                 isMatched: {$first: {$eq: ['$userId', data.userId]}},
-                                activityInfo: {'$push': '$$ROOT'}
+                                inviteCount: {$first: '$inviteCount'},
+                                activityInfo: {'$push': '$$ROOT'},
                             }
                         }
                     ]

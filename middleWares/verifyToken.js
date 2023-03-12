@@ -7,8 +7,13 @@ const middleWares = {
     try {
       const decodeInfo = await token.decodeToken(req.headers);
       if (decodeInfo){
-        req.decodeInfo = decodeInfo;
-        next()
+        let user = await req.mongoConnection.collection('users').find({email: decodeInfo.email}).toArray();
+        if (user.length > 0) {
+          req.decodeInfo = decodeInfo;
+          next()
+        } else {
+          res.status(401).send({success: false, code: 401, message: 'user not found'});
+        }
       } else {
         res.status(401).send({success: false, code: 401, message: 'Invalid Authorization'});
       }

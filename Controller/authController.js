@@ -25,6 +25,22 @@ const authController = {
             res.send({success: false, code: 500, data: err, message: 'something went wrong'})
         }
     },
+    checkUser: async (req, res) => {
+        try {
+            // let {user} = req.body;
+            console.log();
+            let user = await req.mongoConnection.collection('users').find({email: req.body.email}).limit(1).toArray();
+            if (user.length > 0) {
+                let Jwttoken = jwt.encode(user[0], configFile.secretKey);
+                res.status(200).send({success: true, code: 200, data: Jwttoken, message: 'success'})
+            } else {
+                res.status(200).send({success: true, code: 200, data: 'new', message: 'success'})
+            }
+        } catch(err) {
+            console.log(err, 122);
+            res.send({success: false, code: 500, data: err, message: 'something went wrong'})
+        }
+    },
     createActivity: async (req, res) => {
         try {
             let {data, location, activityType, date, time, genderChoice, age, maxPeople, aboutActivity} = req.body;
@@ -92,6 +108,35 @@ const authController = {
             res.status(500).send({success: false, code: 500, data: err, message: 'something went wrong'})
         }
     },
+    deleteActivity: async (req, res) => {
+        try {
+            let deleteUser = await req.mongoConnection.collection('activities').deleteOne({_id: new ObjectId(req.body.id)});
+            if (deleteUser) {
+                res.status(200).send({success: true, code: 200, data: deleteUser, message: 'success'})
+            } else {
+                res.status(400).send({success: false, code: 400, data: deleteUser, message: 'something went wrong'})
+            }
+        } catch (err) {
+            console.log(err);
+            res.status(500).send({success: false, code: 500, data: err, message: 'something went wrong'})
+        }
+    },
+    getProfile: async (req, res) => {
+        try {
+            let user = await req.mongoConnection.collection('users').find({_id: new ObjectId(req.body.id)}).toArray();
+            console.log(req.body.id, 76765);
+            if (user.length > 0) {
+                user = user[0];
+                delete user.authentication;
+                res.status(200).send({success: true, code: 200, data: user, message: 'success'})
+            } else {
+                res.status(400).send({success: false, code: 400, data: user, message: 'something went wrong'})
+            }
+        } catch(err) {
+            console.log(err);
+            res.status(500).send({success: false, code: 500, data: err, message: 'something went wrong'})
+        }
+    },
     updateActivity: async (req, res) => {
         try {
             let {body, decodeInfo} = req;
@@ -115,6 +160,14 @@ const authController = {
                     upsert: true
                 }
                 let updateViews = await authModel.updateSingleDoc(req.mongoConnection, 'activityVisitorData', updateDoc);
+                if (key == 'joined') {
+                    let inviteCount = isViewUpdate[0]?.inviteCount | 0;
+                    updateDoc.match = {_id: data.activityId};
+                    updateDoc.data = {inviteCount: value? inviteCount + 1: inviteCount - 1}
+                    updateDoc.upsert = false;
+                    let updateCount = await authModel.updateSingleDoc(req.mongoConnection, 'activities', updateDoc);
+                    // updateDoc.data.inviteCount = value? inviteCount + 1: inviteCount - 1;
+                }
                 // let visData = await authModel.findOne(req.mongoConnection, 'activityVisitorData', updateDoc.match )
                 let activity = await authModel.getActivityInfo(req.mongoConnection, data);
                 res.status(200).send({success: true, code: 200, data: activity, message: 'success'})
