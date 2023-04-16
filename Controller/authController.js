@@ -47,7 +47,7 @@ const authController = {
             let user = await req.mongoConnection.collection('users').find({email: req.decodeInfo.email}).toArray();
             console.log(req.decodeInfo, 76876);
             if (user.length > 0){
-                activity = Object.assign(activity, {dateTime: new Date(), userId: new ObjectId(req.decodeInfo._id)});
+                activity = Object.assign(activity, {dateTime: new Date(), userId: new ObjectId(req.decodeInfo._id), startDate: new Date(activity.startDate), endDate: new Date(activity.endDate)});
                 let insert = await req.mongoConnection.collection('activities').insertOne(activity);
                 console.log(insert, 4343);
                 if (insert) {
@@ -91,6 +91,20 @@ const authController = {
                 let updateViews = await authModel.updateSingleDoc(req.mongoConnection, 'activities', updateData)
             }
             let activity = await authModel.getActivityInfo(req.mongoConnection, data);
+            let updateDoc = {
+                match: {
+                    activityId: new ObjectId(body.activityId),
+                    visitorId: new ObjectId(decodeInfo._id),
+                },
+                data: {
+                    activityId: new ObjectId(body.activityId),
+                    visitorId: new ObjectId(decodeInfo._id),
+                    isVisitor: !isViewUpdate[0].isMatched,
+                    lastSeen: new Date()
+                },
+                upsert: true
+            }
+            let updateLastSeen = await authModel.updateSingleDoc(req.mongoConnection, 'activityVisitorData', updateDoc);
             res.status(200).send({success: true, code: 200, data: activity, message: 'success'})
         } catch (err) {
             console.log(err);
@@ -154,6 +168,12 @@ const authController = {
                     updateDoc.match = {_id: data.activityId};
                     updateDoc.data = {inviteCount: value? inviteCount + 1: inviteCount - 1}
                     updateDoc.upsert = false;
+                    if (value) {
+                        updateDoc.data.inviteSendDate = new Date();
+                    } else {
+                        updateDoc.data.inviteCancelledDate = new Date();
+                        updateDoc.data.inviteCancelledBy = 'self';
+                    }
                     let updateCount = await authModel.updateSingleDoc(req.mongoConnection, 'activities', updateDoc);
                     // updateDoc.data.inviteCount = value? inviteCount + 1: inviteCount - 1;
                 }
@@ -162,6 +182,37 @@ const authController = {
                 res.status(200).send({success: true, code: 200, data: activity, message: 'success'})
             // }
         } catch (err) {
+            console.log(err);
+            res.status(500).send({success: false, code: 500, data: err, message: 'something went wrong'})
+        }
+    },
+    getInvites: async(req, res) => {
+        try {
+            let {body, decodeInfo} = req;
+            let data = {
+                activityId: new ObjectId(body.activityId),
+                userId: new ObjectId(decodeInfo._id),
+            }
+
+            let getActivityInvites = await authModel.getInvitesInfo(req.mongoConnection, data);
+            let acceptedCount = 0;
+            let cancelledCount = 0;
+            if (getActivityInvites.length) {
+                getActivityInvites[0].activityInfo.forEach(element => {
+                    if (element.accepted) {
+                        acceptedCount += 1;
+                    } else if (element.cancelled) {
+                        cancelledCount += 1;
+                    }
+                });
+                getActivityInvites[0].acceptedCount = acceptedCount;
+                getActivityInvites[0].cancelledCount = cancelledCount;
+                res.status(200).send({success: true, code: 200, data: getActivityInvites, message: 'success'})
+            } else {
+                res.status(400).send({success: true, code: 400, data: getActivityInvites, message: 'something went wrong'})
+            }
+            console.log(getActivityInvites, 565);
+        } catch(err) {
             console.log(err);
             res.status(500).send({success: false, code: 500, data: err, message: 'something went wrong'})
         }

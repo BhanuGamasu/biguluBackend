@@ -24,7 +24,7 @@ let authModel = {
                             }
                         },
                         {
-                            $addFields: {'isVisitor': {$ne: [data.userId, '$userId']}}
+                            $addFields: { 'isVisitor': { $ne: [data.userId, '$userId'] } }
                         },
                         {
                             $unwind: {
@@ -55,7 +55,7 @@ let authModel = {
                                         },
                                     }
                                 ],
-                    
+
                                 as: "activityCreatedBy"
                             }
                         },
@@ -86,10 +86,10 @@ let authModel = {
                         {
                             $group: {
                                 _id: '$_id',
-                                views: {$first: '$views'},
-                                isMatched: {$first: {$eq: ['$userId', data.userId]}},
-                                inviteCount: {$first: '$inviteCount'},
-                                activityInfo: {'$push': '$$ROOT'},
+                                views: { $first: '$views' },
+                                isMatched: { $first: { $eq: ['$userId', data.userId] } },
+                                inviteCount: { $first: '$inviteCount' },
+                                activityInfo: { '$push': '$$ROOT' },
                             }
                         }
                     ]
@@ -118,10 +118,65 @@ let authModel = {
         })
     },
     findOne: (conn, collectionName, data) => {
-        return new Promise( async (resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             try {
                 let doc = await conn.collection(collectionName).findOne(data);
                 resolve(doc);
+            } catch (err) {
+                reject(err)
+            }
+        })
+    },
+    getInvitesInfo: (conn, data) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let invites = await conn.collection('activities').aggregate(
+                    [
+                        {
+                            $match: {
+                                "_id": data.activityId,
+                                "startDate": { $gt: new Date() }
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "activityVisitorData",
+                                let: { actId: '$_id' },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            isVisitor: true,
+                                            joined: true,
+                                            $expr: {
+                                                $and: [
+                                                    { $eq: ["$activityId", "$$actId"] },
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    {
+                                        $lookup: {
+                                            from: 'users',
+                                            let: { 'userId': '$visitorId' },
+                                            pipeline: [
+                                                {
+                                                    $match: {
+                                                        $expr: {
+                                                            $eq: ['$_id', '$$userId']
+                                                        }
+                                                    }
+                                                },
+                                            ],
+                                            as: 'userInfo'
+                                        }
+                                    }
+                                ],
+                                as: 'activityInfo'
+                            }
+                        },
+                    ]
+                ).toArray()
+                resolve(invites)
             } catch (err) {
                 reject(err)
             }

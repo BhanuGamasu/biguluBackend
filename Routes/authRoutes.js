@@ -10,4 +10,5 @@ auth.post('/deleteActivity', tokenValidator.verify, authController.deleteActivit
 auth.post('/getProfile', tokenValidator.verify, authController.getProfile);
 auth.post('/updateActivity', tokenValidator.verify, authController.updateActivity);
 auth.get('/getAllActivities', tokenValidator.verify, authController.getAllActivities);
+auth.post('/invites', tokenValidator.verify, authController.getInvites)
 module.exports = auth;
