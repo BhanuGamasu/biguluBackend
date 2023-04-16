@@ -43,23 +43,11 @@ const authController = {
     },
     createActivity: async (req, res) => {
         try {
-            let {data, location, activityType, date, time, genderChoice, age, maxPeople, aboutActivity} = req.body;
+            let activity = req.body;
             let user = await req.mongoConnection.collection('users').find({email: req.decodeInfo.email}).toArray();
             console.log(req.decodeInfo, 76876);
             if (user.length > 0){
-                let activity = {
-                    location,
-                    activityType,
-                    date,
-                    time,
-                    dateTime: new Date(),
-                    genderChoice,
-                    age,
-                    maxPeople,
-                    aboutActivity,
-                    views: 0,
-                    userId: new ObjectId(req.decodeInfo._id)
-                }
+                activity = Object.assign(activity, {dateTime: new Date(), userId: new ObjectId(req.decodeInfo._id)});
                 let insert = await req.mongoConnection.collection('activities').insertOne(activity);
                 console.log(insert, 4343);
                 if (insert) {
@@ -93,6 +81,7 @@ const authController = {
                 userId: new ObjectId(decodeInfo._id),
             }
             let isViewUpdate = await authModel.checkViews(req.mongoConnection, data);
+            console.log(isViewUpdate, body.activityId, decodeInfo._id);
             if (!isViewUpdate[0].isMatched) {
                 let updateData = {
                     data: {views: (isViewUpdate[0].views + 1)},
