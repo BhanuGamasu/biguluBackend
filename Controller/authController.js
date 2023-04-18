@@ -47,7 +47,7 @@ const authController = {
             let user = await req.mongoConnection.collection('users').find({email: req.decodeInfo.email}).toArray();
             console.log(req.decodeInfo, 76876);
             if (user.length > 0){
-                activity = Object.assign(activity, {dateTime: new Date(), userId: new ObjectId(req.decodeInfo._id), startDate: new Date(activity.startDate), endDate: new Date(activity.endDate)});
+                activity = Object.assign(activity, {acceptedCount: 0, cancelledCount: 0, dateTime: new Date(), userId: new ObjectId(req.decodeInfo._id), startDate: new Date(activity.startDate), endDate: new Date(activity.endDate)});
                 let insert = await req.mongoConnection.collection('activities').insertOne(activity);
                 console.log(insert, 4343);
                 if (insert) {
@@ -147,9 +147,9 @@ const authController = {
                 activityId: new ObjectId(body.activityId),
                 userId: new ObjectId(decodeInfo._id),
             }
+            let {key, value, activityId} = body;
             let isViewUpdate = await authModel.checkViews(req.mongoConnection, data);
-            // if (isViewUpdate[0].isMatched) {
-                let {key, value, activityId} = body;
+            if (isViewUpdate[0].isMatched || key == 'favorite') {
                 let updateDoc = {
                     // ...isViewUpdate[0].activityInfo[0],
                     match: {
@@ -163,24 +163,29 @@ const authController = {
                     upsert: true
                 }
                 let updateViews = await authModel.updateSingleDoc(req.mongoConnection, 'activityVisitorData', updateDoc);
-                if (key == 'joined') {
-                    let inviteCount = isViewUpdate[0]?.inviteCount | 0;
-                    updateDoc.match = {_id: data.activityId};
-                    updateDoc.data = {inviteCount: value? inviteCount + 1: inviteCount - 1}
-                    updateDoc.upsert = false;
-                    if (value) {
-                        updateDoc.data.inviteSendDate = new Date();
-                    } else {
-                        updateDoc.data.inviteCancelledDate = new Date();
-                        updateDoc.data.inviteCancelledBy = 'self';
-                    }
-                    let updateCount = await authModel.updateSingleDoc(req.mongoConnection, 'activities', updateDoc);
-                    // updateDoc.data.inviteCount = value? inviteCount + 1: inviteCount - 1;
-                }
                 // let visData = await authModel.findOne(req.mongoConnection, 'activityVisitorData', updateDoc.match )
                 let activity = await authModel.getActivityInfo(req.mongoConnection, data);
                 res.status(200).send({success: true, code: 200, data: activity, message: 'success'})
-            // }
+            } else {
+                let inviteCount = isViewUpdate[0]?.inviteCount | 0;
+                let updateDoc = {};
+                updateDoc.match = {_id: data.activityId};
+                updateDoc.data = {inviteCount: value? inviteCount + 1: inviteCount - 1}
+                updateDoc.upsert = false;
+                let updateCount = await authModel.updateSingleDoc(req.mongoConnection, 'activities', updateDoc);
+                let updateVisData = {};
+                updateVisData.match = {activityId: data.activityId, visitorId: data.userId} 
+                if (value) {
+                    updateVisData.data = {inviteSendDate: new Date(), joined: value};
+                } else {
+                    updateVisData.data = {inviteCancelledDate: new Date(), joined: value, inviteCancelledBy: 'self'};
+                }
+                updateVisData.upsert = false;
+                let updateVisInfo = await authModel.updateSingleDoc(req.mongoConnection, 'activityVisitorData', updateVisData);
+                let activity = await authModel.getActivityInfo(req.mongoConnection, data);
+                res.status(200).send({success: true, code: 200, data: activity, message: 'success'})
+                // updateDoc.data.inviteCount = value? inviteCount + 1: inviteCount - 1;
+            }
         } catch (err) {
             console.log(err);
             res.status(500).send({success: false, code: 500, data: err, message: 'something went wrong'})
@@ -212,6 +217,74 @@ const authController = {
                 res.status(400).send({success: true, code: 400, data: getActivityInvites, message: 'something went wrong'})
             }
             console.log(getActivityInvites, 565);
+        } catch(err) {
+            console.log(err);
+            res.status(500).send({success: false, code: 500, data: err, message: 'something went wrong'})
+        }
+    },
+    updateAcceptInfo: async(req, res) => {
+        try {
+            let {value, visitorId, activityId} = req.body;
+            console.log(value, visitorId, activityId, 'hiiiiiiii');
+            let activity = await req.mongoConnection.collection('activities').findOne({_id: new ObjectId(activityId)});
+            console.log(activity);
+            let visActivityData = await req.mongoConnection.collection('activityVisitorData').findOne({visitorId: new ObjectId(visitorId), activityId: new ObjectId(activityId)});
+            if (value) {
+                let acceptedCount = activity.acceptedCount + 1;
+                let updateVisData = {};
+                updateVisData.match = {visitorId: new ObjectId(visitorId), activityId: new ObjectId(activityId)};
+                updateVisData.data = {accepted: true, acceptedDate: new Date()},
+                updateVisData.upsert = false;
+                let updateVisInfo = await authModel.updateSingleDoc(req.mongoConnection, 'activityVisitorData', updateVisData);
+                if (updateVisInfo) {
+                    let updateDoc = {};
+                    updateDoc.match = {_id: new ObjectId(activityId)};
+                    updateDoc.data = {acceptedCount: acceptedCount};
+                    updateDoc.upsert = false;
+                    let updateInfo = await authModel.updateSingleDoc(req.mongoConnection, 'activities', updateDoc);
+                    if (updateInfo) {
+                        let sendData = await req.mongoConnection.collection('activityVisitorData').findOne({visitorId: new ObjectId(visitorId), activityId: new ObjectId(activityId)});
+                        res.status(200).send({success: true, code: 200, data: sendData, message: 'success'})
+                    } else {
+                        res.status(400).send({success: false, code: 400, data: updateInfo, message: 'something went wrong'})
+                    }
+                } else {
+                    res.status(400).send({success: false, code: 400, data: updateVisInfo, message: 'something went wrong'})
+                }
+            } else {
+                let acceptedCount = visActivityData.accepted? activity.acceptedCount - 1: activity.acceptedCount;
+                let cancelledCount = activity.cancelledCount + 1;
+                let updateDoc = {};
+                updateDoc.match = {_id: new ObjectId(activityId)};
+                updateDoc.data = {acceptedCount: acceptedCount, cancelledCount: cancelledCount};
+                updateDoc.upsert = false;
+                let updateInfo = await authModel.updateSingleDoc(req.mongoConnection, 'activities', updateDoc);
+                if (updateInfo) {
+                    let updateVisData = {};
+                    updateVisData.match = {visitorId: new ObjectId(visitorId), activityId: new ObjectId(activityId)};
+                    updateVisData.data = {accepted: false, cancelled: true, cancelledDate: new Date()},
+                    updateVisData.upsert = false;
+                    let updateVisInfo = await authModel.updateSingleDoc(req.mongoConnection, 'activityVisitorData', updateVisData);
+                    if(updateVisInfo) {
+                        let sendData = await req.mongoConnection.collection('activityVisitorData').findOne({visitorId: new ObjectId(visitorId), activityId: new ObjectId(activityId)});
+                        res.status(200).send({success: true, code: 200, data: sendData, message: 'success'})
+                    } else {
+                        res.status(400).send({success: false, code: 400, data: updateVisInfo, message: 'something went wrong'})
+                    }
+                } else {
+                    res.status(400).send({success: false, code: 400, data: updateInfo, message: 'something went wrong'})
+                }
+            }
+        } catch(err) {
+            console.log(err);
+            res.status(500).send({success: false, code: 500, data: err, message: 'something went wrong'})
+        }
+    },
+    acceptInfo: async(req, res) => {
+        try {
+            let {visitorId, activityId} = req.body;
+            let sendData = await req.mongoConnection.collection('activityVisitorData').findOne({visitorId: new ObjectId(visitorId), activityId: new ObjectId(activityId)});
+            res.status(200).send({success: true, code: 200, data: sendData, message: 'success'})
         } catch(err) {
             console.log(err);
             res.status(500).send({success: false, code: 500, data: err, message: 'something went wrong'})

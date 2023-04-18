@@ -10,5 +10,9 @@ auth.post('/deleteActivity', tokenValidator.verify, authController.deleteActivit
 auth.post('/getProfile', tokenValidator.verify, authController.getProfile);
 auth.post('/updateActivity', tokenValidator.verify, authController.updateActivity);
 auth.get('/getAllActivities', tokenValidator.verify, authController.getAllActivities);
-auth.post('/invites', tokenValidator.verify, authController.getInvites)
+auth.post('/invites', tokenValidator.verify, authController.getInvites);
+auth.post('/acceptInfo', tokenValidator.verify, authController.acceptInfo);
+auth.post('/updateAcceptInfo', tokenValidator.verify, authController.updateAcceptInfo);
+
+
 module.exports = auth;
