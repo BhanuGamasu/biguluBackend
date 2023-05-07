@@ -1,4 +1,55 @@
+const { ObjectId } = require("mongodb");
+
 let authModel = {
+    getAllActivities: (conn, data) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                console.log(data._id, 767);
+                let activities = await conn.collection('activities').aggregate(
+                    [
+                        {
+                            $match: { "startDate": { $gt: new Date() } }
+                        },
+                        {
+                            $lookup: {
+                                from: 'activityVisitorData',
+                                let: {
+                                    'actId': '$_id'
+                                },
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            $expr: {
+                                                $and: [
+                                                    { $eq: ['$activityId', '$$actId'] },
+                                                    { $eq: ['$visitorId', new ObjectId(data._id)] }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ],
+                                as: 'visData'
+                            }
+                        },
+                        {
+                            $unwind: {
+                                path: '$visData',
+                                preserveNullAndEmptyArrays: true
+                            }
+                        },
+                        {
+                            $sort: {
+                                'dateTime': -1
+                            }
+                        }
+                    ]
+                ).toArray();
+                resolve(activities);
+            } catch (err) {
+                reject(err);
+            }
+        })
+    },
     getActivityInfo: (conn, data) => {
         return new Promise(async (resolve, reject) => {
             try {
@@ -179,6 +230,85 @@ let authModel = {
                 resolve(invites)
             } catch (err) {
                 reject(err)
+            }
+        })
+    },
+
+    getSearchData: (conn, collection, data) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const query = [
+                    {
+                        $match: {
+                            $expr: {
+                                $or: [],
+                            },
+                            startDate: { $gte: new Date(), $lte: data.date },
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: 'activityVisitorData',
+                            let: {
+                                'actId': '$_id'
+                            },
+                            pipeline: [
+                                {
+                                    $match: {
+                                        $expr: {
+                                            $and: [
+                                                { $eq: ['$activityId', '$$actId'] },
+                                                { $eq: ['$visitorId', data._id] }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ],
+                            as: 'visData'
+                        }
+                    },
+                    {
+                        $unwind: {
+                            path: '$visData',
+                            preserveNullAndEmptyArrays: true
+                        }
+                    },
+                    {
+                        $sort: {
+                            'dateTime': -1
+                        }
+                    }
+                ]
+                if (data.location !== "") {
+                    query[0].$match['location.description'] = { '$regex': data.location, $options: 'i' };
+                }
+                if (data.count !== "") {
+                    query[0].$match.$expr.$or.push({ $eq: ['$count', data.count] })
+                }
+                if (data.time !== "") {
+                    query[0].$match.$expr.$or.push({ $eq: ['$timeFrame', data.time] })
+                }
+                if (data.age !== "") {
+                    query[0].$match.$expr.$or.push({ $eq: ['$age', data.age] })
+                }
+                if (data.gender !== "") {
+                    query[0].$match.$expr.$or.push({ $eq: ['$gender', data.gender] })
+                }
+                if (data.category !== "") {
+                    query[0].$match.$expr.$or.push({ $eq: ['$activityType', data.category] })
+                }
+                if (data.activity !== "") {
+                    query[0].$match.$expr.$or.push({ $eq: ['$activityName', data.activity] })
+                }
+                if (data.count == "single") {
+                    query[0].$match.$expr.$or.push({ $lte: ['$count', 1] })
+                } else {
+                    query[0].$match.$expr.$or.push({ $gt: ['$count', 1] })
+                }
+                let searchData = await conn.collection(collection).aggregate(query).toArray();
+                resolve(searchData);
+            } catch (err) {
+                reject(err);
             }
         })
     }

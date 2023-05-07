@@ -13,6 +13,7 @@ auth.get('/getAllActivities', tokenValidator.verify, authController.getAllActivi
 auth.post('/invites', tokenValidator.verify, authController.getInvites);
 auth.post('/acceptInfo', tokenValidator.verify, authController.acceptInfo);
 auth.post('/updateAcceptInfo', tokenValidator.verify, authController.updateAcceptInfo);
+auth.post('/getFilterData', tokenValidator.verify, authController.getFilterData);
 
 
 module.exports = auth;
