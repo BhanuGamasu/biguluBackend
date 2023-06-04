@@ -52,7 +52,7 @@ const authController = {
             activity.timeFrame = timeFrame;
             activity.count = parseInt(activity.count)
             if (user.length > 0) {
-                activity = Object.assign(activity, { acceptedCount: 0, cancelledCount: 0, dateTime: new Date(), userId: new ObjectId(req.decodeInfo._id), startDate: new Date(activity.startDate), endDate: new Date(activity.endDate) });
+                activity = Object.assign(activity, { acceptedCount: 0, cancelledCount: 0, dateTime: new Date(), userId: new ObjectId(req.decodeInfo._id), startDate: new Date(activity.startDate), endDate: activity.endDate == ""? "": new Date(activity.endDate) });
                 let insert = await req.mongoConnection.collection('activities').insertOne(activity);
                 // console.log(insert, 4343);
                 if (insert.acknowledged) {
