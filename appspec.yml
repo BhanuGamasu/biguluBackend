@@ -4,3 +4,11 @@ files:
   - source: /
     destination: /var/www/httpdocs/api
 file_exists_behavior: OVERWRITE
+# Define lifecycle hooks for service management
+hooks:
+  BeforeInstall:
+    - location: scripts/pre-install.sh  # Replace with your script path
+      runas: root  # Adjust user permissions if needed
+  AfterInstall:
+    - location: scripts/post-install.sh  # Replace with your script path
+      runas: root  # Adjust user permissions if needed
