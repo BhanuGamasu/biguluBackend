@@ -1,0 +1,16 @@
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - echo "Installing n (Node version manager)..."
+  build:
+    commands:
+      - echo "Installing Node.js version "
+      - n 18.13.0
+      - npm install --legacy-peer-deps
+      - npm install -g @angular/cli
+  post_build:
+    commands:
+      - echo "Build completed"
+artifacts:
+  files: '**/*'
