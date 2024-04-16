@@ -1,3 +1,0 @@
-ENV_port=3900
-ENV_db_url=mongodb+srv://prem:Prem7623@cluster1.ensz3kz.mongodb.net/?retryWrites=true&w=majority
-ENV_secret=bigulu@999
