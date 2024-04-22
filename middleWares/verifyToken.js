@@ -1,5 +1,7 @@
 const { OAuth2Client } = require('google-auth-library');
 const token = require('./tokenValidator');
+const { GridFSBucket } = require('mongodb');
+const { ObjectId } = require('mongodb');
 
 
 const middleWares = {
@@ -7,15 +9,20 @@ const middleWares = {
     try {
       const decodeInfo = await token.decodeToken(req.headers);
       if (decodeInfo){
-        req.decodeInfo = decodeInfo;
-        next()
+        let user = await req.mongoConnection.collection('users').find({email: decodeInfo.email}).toArray();
+        if (user.length > 0) {
+          req.decodeInfo = user[0];
+          next()
+        } else {
+          res.status(401).send({success: false, code: 401, message: 'user not found'});
+        }
       } else {
         res.status(401).send({success: false, code: 401, message: 'Invalid Authorization'});
       }
     } catch(err) {
       res.status(500).send({success: false, code: 500, data: err, message: 'Invalid Authorization'})
     }
-  }
+  },
 }
 
 module.exports = middleWares;
