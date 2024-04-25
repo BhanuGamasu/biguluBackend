@@ -5,11 +5,11 @@ let authModel = {
     getAllActivities: (conn, data) => {
         return new Promise(async (resolve, reject) => {
             try {
-                console.log(data._id, 767);
+                console.log(data._id, 76767);
                 let activities = await conn.collection('activities').aggregate(
                     [
                         {
-                            $match: { 
+                            $match: {
                                 "startDate": { $gt: new Date() },
                                 "activityCancelled": false
                             }
@@ -50,7 +50,7 @@ let authModel = {
                 ).toArray();
                 resolve(activities);
             } catch (err) {
-                await logErrors({mongoConnection: conn, err});
+                await logErrors({ mongoConnection: conn, err });
                 reject(err);
             }
         })
@@ -127,7 +127,7 @@ let authModel = {
                 ).toArray();
                 resolve(userInsert);
             } catch (error) {
-                await logErrors({mongoConnection: conn, err});
+                await logErrors({ mongoConnection: conn, err });
                 reject(error);
             }
         });
@@ -155,7 +155,7 @@ let authModel = {
                 ).toArray()
                 resolve(check);
             } catch (err) {
-                await logErrors({mongoConnection: conn, err});
+                await logErrors({ mongoConnection: conn, err });
                 reject(err)
             }
         })
@@ -173,7 +173,7 @@ let authModel = {
                 )
                 resolve(update);
             } catch (err) {
-                await logErrors({mongoConnection: conn, err});
+                await logErrors({ mongoConnection: conn, err });
                 reject(err)
             }
         })
@@ -369,7 +369,7 @@ let authModel = {
                 console.log(JSON.stringify(a));
                 resolve(activities);
             } catch (err) {
-                await logErrors({mongoConnection: conn, err});
+                await logErrors({ mongoConnection: conn, err });
                 reject(err)
             }
         })
@@ -380,7 +380,7 @@ let authModel = {
                 let doc = await conn.collection(collectionName).findOne(data);
                 resolve(doc);
             } catch (err) {
-                await logErrors({mongoConnection: conn, err});
+                await logErrors({ mongoConnection: conn, err });
                 reject(err)
             }
         })
@@ -436,7 +436,7 @@ let authModel = {
                 ).toArray()
                 resolve(invites)
             } catch (err) {
-                await logErrors({mongoConnection: conn, err});
+                await logErrors({ mongoConnection: conn, err });
                 reject(err)
             }
         })
@@ -518,7 +518,7 @@ let authModel = {
                 let searchData = await conn.collection(collection).aggregate(query).toArray();
                 resolve(searchData);
             } catch (err) {
-                await logErrors({mongoConnection: conn, err});
+                await logErrors({ mongoConnection: conn, err });
                 reject(err);
             }
         })
