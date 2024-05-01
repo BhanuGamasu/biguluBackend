@@ -23,6 +23,7 @@ const authController = {
             }
             let inserted = await req.mongoConnection.collection('users').find({ email: req.body.email }).limit(1).toArray();
             let Jwttoken = jwt.encode(inserted[0], configFile.secretKey);
+            console.log("testttt");
             if (insert) {
                 res.status(200).send({ success: true, code: 200, data: Jwttoken, message: 'success' })
             } else {
@@ -31,7 +32,7 @@ const authController = {
             // res.status(200).send({success: true, code: 200, data: email, message: 'success'})
         } catch (err) {
             console.log(err, 8787);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -55,7 +56,7 @@ const authController = {
             }
         } catch (err) {
             console.log(err, 122);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -93,7 +94,7 @@ const authController = {
             }
         } catch (err) {
             console.log(err, 382);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -113,7 +114,7 @@ const authController = {
             }
         } catch (err) {
             console.log(err);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -123,7 +124,7 @@ const authController = {
             let activities = await authModel.getAllActivities(req.mongoConnection, req.decodeInfo);
             res.status(200).send({ success: true, code: 200, data: activities, message: 'success' })
         } catch (err) {
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -161,7 +162,7 @@ const authController = {
             res.status(200).send({ success: true, code: 200, data: activity, message: 'success' })
         } catch (err) {
             console.log(err);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -175,7 +176,7 @@ const authController = {
             }
         } catch (err) {
             console.log(err);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -186,7 +187,7 @@ const authController = {
             res.status(200).send({ success: true, code: 200, data: req.decodeInfo, message: 'success' })
         } catch (err) {
             console.log(err);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -218,7 +219,7 @@ const authController = {
                 })
         } catch (err) {
             console.log(err, 676);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'Invalid Authorization' })
         }
     },
@@ -241,7 +242,7 @@ const authController = {
                 })
         } catch (err) {
             console.log(err);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -267,7 +268,7 @@ const authController = {
             res.status(200).send({ success: true, code: 200, activities, message: 'success' })
         } catch (err) {
             console.log(err);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -283,7 +284,7 @@ const authController = {
             }
         } catch (err) {
             console.log(err);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -335,7 +336,7 @@ const authController = {
             }
         } catch (err) {
             console.log(err);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -366,7 +367,7 @@ const authController = {
             }
         } catch (err) {
             console.log(err);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -433,7 +434,7 @@ const authController = {
             }
         } catch (err) {
             console.log(err);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -444,7 +445,7 @@ const authController = {
             res.status(200).send({ success: true, code: 200, data: sendData, message: 'success' })
         } catch (err) {
             console.log(err);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     },
@@ -482,7 +483,7 @@ const authController = {
             res.status(200).send({ success: true, code: 200, data: updateVisInfo, message: 'success' });
         } catch (err) {
             console.log(err, 6363);
-            await logErrors({mongoConnection: req.mongoConnection, err});
+            await logErrors({ mongoConnection: req.mongoConnection, err });
             res.status(500).send({ success: false, code: 500, data: err, message: 'something went wrong' })
         }
     }
