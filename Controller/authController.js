@@ -383,7 +383,7 @@ const authController = {
                 updateVisData.data = {
                     joined: type == 'accept',
                     acceptedDate: new Date(),
-                    status: 'acceptedByMaster',
+                    status: 'Accepted',
                     cancelledByMaster: false,
                 },
                     updateVisData.upsert = false;
@@ -418,7 +418,7 @@ const authController = {
                         joined: false,
                         cancelledByMaster: type == 'reject',
                         cancelledDate: new Date(),
-                        status: 'rejectedByMaster',
+                        status: 'Rejected',
                     },
                         updateVisData.upsert = false;
                     let updateVisInfo = await authModel.updateSingleDoc(req.mongoConnection, 'activityVisitorData', updateVisData);
